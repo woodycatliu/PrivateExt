@@ -51,6 +51,7 @@ public extension CombineConnection {
                 let prefix = sandSize
                 let end = min(maximumDatagramSize, count - sandSize)
                 self.sendData(content: data[prefix..<end], contentContext: contentContext, isComplete: isComplete, completion: completion)
+                sandSize += end
             }
         }
     }
