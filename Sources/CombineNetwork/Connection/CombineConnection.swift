@@ -35,12 +35,31 @@ public extension CombineConnection {
     func restart() {
         _restart()
     }
+    
+    func sendBatch(with maximumDatagramSize: Int? = nil, content: Data?, contentContext: ContentContext = .defaultMessage, isComplete: Bool?, completion: SendCompletion? = nil) {
+        let maximumDatagramSize = maximumDatagramSize ?? self.maximumDatagramSize
+        guard let data = content,
+        data.count > maximumDatagramSize else {
+            self.sendData(content: nil,contentContext: contentContext ,isComplete: isComplete, completion: completion)
+            return
+        }
+        
+        self.batch {
+            var sandSize = 0
+            let count = data.count
+            while sandSize < count {
+                let prefix = sandSize
+                let end = min(maximumDatagramSize, count - sandSize)
+                self.sendData(content: data[prefix..<end], contentContext: contentContext, isComplete: isComplete, completion: completion)
+            }
+        }
+    }
 
     func batch(_ completion: @escaping () -> Void) {
         _batch(completion)
     }
     
-    func sendData(content: Data?, contentContext: ContentContext?, isComplete: Bool?, completion: SendCompletion?) {
+    func sendData(content: Data?, contentContext: ContentContext = .defaultMessage, isComplete: Bool?, completion: SendCompletion?) {
         _sendData(content, contentContext, isComplete, completion)
     }
     
@@ -267,12 +286,16 @@ final class NWConnectionProxy {
 
 public extension CombineConnection {
     
-     struct SendCompletion {
+    struct SendCompletion {
+                
+        public init(errorHandle: @escaping (_ error: ConnectionError?) -> Void) {
+            self.errorHandle = errorHandle
+        }
         
-         /// Completion handler to be invoked when send content has been successfully processed, or failed to send due to an error.
-         /// Note that this does not guarantee that the data was sent out over the network, or acknowledge, but only that
-         /// it has been consumed by the protocol stack.
-         public let errorHandle: (_ error: ConnectionError?) -> Void
+        /// Completion handler to be invoked when send content has been successfully processed, or failed to send due to an error.
+        /// Note that this does not guarantee that the data was sent out over the network, or acknowledge, but only that
+        /// it has been consumed by the protocol stack.
+        public let errorHandle: (_ error: ConnectionError?) -> Void
         
     }
 }

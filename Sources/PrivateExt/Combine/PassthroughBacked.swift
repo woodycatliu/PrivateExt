@@ -11,6 +11,7 @@ import Combine
 public struct PassthroughBacked<Output> {
     
     private var subject: PassthroughSubject<Output, Never>
+    
     public init() {
         subject = PassthroughSubject<Output, Never>()
     }

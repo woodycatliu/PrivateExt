@@ -88,6 +88,8 @@ public struct CombineBonjourBrowser {
 
 private class NWBrowserDelegate {
     
+    init() { }
+    
     typealias Service = CombineBonjourBrowser.Service
 
     typealias Flags = CombineBonjourBrowser.Flags
