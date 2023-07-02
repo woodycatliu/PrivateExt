@@ -7,6 +7,51 @@
 
 import Combine
 
+@frozen public struct BindingValue<Output>: Publisher {
+    
+    public typealias Failure = Never
+    
+    public func accept(_ input: Output) {
+        subject.send(input)
+    }
+    
+    public var value: Output {
+        get {
+            subject.value
+        }
+    }
+    
+    public init(_ value: Output) {
+        self.init(BindingValueSubject(value))
+    }
+    
+    public init(_ subject: CurrentValueSubject<Output, Failure>) {
+        self.init(BindingValueSubject(subject))
+    }
+    
+    public init(with publisher: AnyPublisher<Output, Failure>, value: Output, set: @escaping (Output) -> Void) {
+        let subject = BindingValueSubject(with: publisher, value: value, set: set)
+        self.init(subject)
+    }
+    
+    public init(_ bindingValue: BindingValue<Output>) {
+        let s = bindingValue.subject
+        self.subject = s.child()
+    }
+    
+    internal init(_ subject: BindingValueSubject<Output>) {
+        self.subject = subject
+    }
+    
+    public func receive<S>(subscriber: S) where S : Subscriber, Never == S.Failure, Output == S.Input {
+        subject.receive(subscriber: subscriber)
+    }
+    
+    private let subject: BindingValueSubject<Output>
+}
+
+// MARK: BindingValueSubject
+
 public extension BindingValueSubject {
     var binding: BindingValue<Output> {
         return BindingValue(self)
@@ -87,47 +132,4 @@ extension BindingValueSubject {
         return BindingValueSubject(self)
     }
     
-}
-
-@frozen public struct BindingValue<Output>: Publisher {
-    
-    public typealias Failure = Never
-    
-    public func accept(_ input: Output) {
-        subject.send(input)
-    }
-    
-    public var value: Output {
-        get {
-            subject.value
-        }
-    }
-    
-    public init(_ value: Output) {
-        self.init(BindingValueSubject(value))
-    }
-    
-    public init(_ subject: CurrentValueSubject<Output, Failure>) {
-        self.init(BindingValueSubject(subject))
-    }
-    
-    public init(with publisher: AnyPublisher<Output, Failure>, value: Output, set: @escaping (Output) -> Void) {
-        let subject = BindingValueSubject(with: publisher, value: value, set: set)
-        self.init(subject)
-    }
-    
-    public init(_ bindingValue: BindingValue<Output>) {
-        let s = bindingValue.subject
-        self.subject = s.child()
-    }
-    
-    internal init(_ subject: BindingValueSubject<Output>) {
-        self.subject = subject
-    }
-    
-    public func receive<S>(subscriber: S) where S : Subscriber, Never == S.Failure, Output == S.Input {
-        subject.receive(subscriber: subscriber)
-    }
-    
-    private let subject: BindingValueSubject<Output>
 }
