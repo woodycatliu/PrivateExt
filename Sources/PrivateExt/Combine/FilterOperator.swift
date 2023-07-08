@@ -9,23 +9,28 @@ import Combine
 
 extension Publisher {
     
-    public func filterTo(_ isIncluded: @escaping (Self.Output) -> Bool) -> AnyPublisher<Output, Failure> {
-        self.filter(isIncluded).eraseToAnyPublisher()
-    }
-    
-    public func filterTo(equalTo value: Output) -> AnyPublisher<Output, Failure> where Output: AnyObject&Equatable {
-        return self.filterTo { [weak value] output in
+    public func filter(equalTo value: Output) -> AnyPublisher<Output, Failure> where Output: AnyObject&Equatable {
+        return self.filter { [weak value] output in
             guard let value = value else { return false }
             return value == output
-        }
+        }.eraseToAnyPublisher()
     }
     
-    public func filterTo<Value: AnyObject&Equatable>(equalTo value: Value, _ keyPath: KeyPath<Output, Value>) -> AnyPublisher<Output, Failure> {
-        let filtor: (Output) -> Bool = { [weak value] output in
+    public func filter<Value: AnyObject&Equatable>(_ keyPath: KeyPath<Output, Value>,
+                                                   equalTo value: Value) -> AnyPublisher<Output, Failure> {
+        let percolator: (Output) -> Bool = { [weak value] output in
             guard let value = value else { return false }
             return output[keyPath: keyPath] == value
         }
-        return self.filter(filtor).eraseToAnyPublisher()
+        return self.filter(percolator).eraseToAnyPublisher()
+    }
+    
+    public func filter<Value: Equatable>(_ keyPath: KeyPath<Output, Value>,
+                                         equalTo value: Value) -> AnyPublisher<Output, Failure> {
+        let percolator: (Output) -> Bool = { output in
+            return output[keyPath: keyPath] == value
+        }
+        return self.filter(percolator).eraseToAnyPublisher()
     }
     
 }

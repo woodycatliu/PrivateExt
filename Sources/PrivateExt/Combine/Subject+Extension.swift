@@ -1,6 +1,6 @@
 //
-//  CurrentValueSubject+Extension.swift
-//  
+//  Subject+Extension.swift
+//
 //
 //  Created by Woody Liu on 2023/7/2.
 //
@@ -19,3 +19,12 @@ public extension CurrentValueSubject where Failure == Never {
     }
     
 }
+
+public extension PassthroughSubject where Failure == Never {
+    
+    convenience init(with publisher: AnyPublisher<Output, Failure>) {
+        self.init()
+        publisher.receive(subscriber: AnySubscriber(self))
+    }
+}
+
