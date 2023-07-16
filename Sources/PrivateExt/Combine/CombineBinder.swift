@@ -18,6 +18,24 @@ extension Publisher where Failure == Never {
     public func handleEvents(to binder: CombineBinder<Output>) -> Publishers.HandleEvents<Self> {
         return handleEvents(receiveOutput: binder.binding)
     }
+    
+    public func bind<S: Subject>(to subject: S) where S.Output == Output {
+        return setFailureType(to: S.Failure.self)
+            .receive(subscriber: AnySubscriber(subject))
+    }
+
+}
+
+extension Publisher {
+    
+    public func bind<S: Subject>(to subject: S) where S.Output == Output, S.Failure == Failure {
+        return receive(subscriber: AnySubscriber(subject))
+    }
+    
+    public func handleEvents(toOutput binder: CombineBinder<Output>,
+                             toError errorBinder: CombineBinder<Subscribers.Completion<Failure>>? = nil) -> Publishers.HandleEvents<Self> {
+        return handleEvents(receiveOutput: binder.binding, receiveCompletion: errorBinder?.binding)
+    }
 }
 
 public struct CombineBinder<Input>: Subscriber, Cancellable {
@@ -42,7 +60,7 @@ public struct CombineBinder<Input>: Subscriber, Cancellable {
     }
     
     public func receive(subscription: Subscription) {
-        self.subscontainter.subscription = subscription
+        self.subsContainer.subscription = subscription
         subscription.request(.unlimited)
     }
     
@@ -51,7 +69,7 @@ public struct CombineBinder<Input>: Subscriber, Cancellable {
     }
     
     public func cancel() {
-        subscontainter.subscription?.cancel()
+        subsContainer.subscription?.cancel()
     }
     
     fileprivate var binding: (Input) -> () {
@@ -62,7 +80,7 @@ public struct CombineBinder<Input>: Subscriber, Cancellable {
     
     public func receive(completion: Subscribers.Completion<Failure>) {}
     
-    private let subscontainter = SubscriptionContainer()
+    private let subsContainer = SubscriptionContainer()
     
     private class SubscriptionContainer {
         var subscription: Subscription?
