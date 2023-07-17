@@ -20,7 +20,7 @@ extension Publisher where Failure == Never {
     }
     
     public func bind<S: Subject>(to subject: S) where S.Output == Output {
-        return setFailureType(to: S.Failure.self)
+         setFailureType(to: S.Failure.self)
             .receive(subscriber: AnySubscriber(subject))
     }
 
@@ -29,7 +29,7 @@ extension Publisher where Failure == Never {
 extension Publisher {
     
     public func bind<S: Subject>(to subject: S) where S.Output == Output, S.Failure == Failure {
-        return receive(subscriber: AnySubscriber(subject))
+         receive(subscriber: AnySubscriber(subject))
     }
     
     public func handleEvents(toOutput binder: CombineBinder<Output>,
